@@ -1,78 +1,99 @@
 import pyttsx3
 import emoji
 import webbrowser
-import speech_recognition as sr
-#PyAudio
-#PyWhatKit
-#PyJokes
-#Wikipedia
-#OpenweatherApi
+import pywhatkit
+import pyjokes
+import wikipedia
+import requests
 
+API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"  # Replace with your OpenWeatherMap API key
+LOCATION = "YOUR_CITY"  # Replace with your city
 
-mark = pyttsx3.init()
-rate = 150
-mark.setProperty("rate", rate)
-greet = input()
-if greet=="Hi" or greet=="hi" or greet=="Hey" or greet=="hey" or greet=="hello" or greet=="Hello":
-    print("""Good Day! Glad to meet you!
-How are you doing?""")
-    speech = "Good day! Glad to meet you! How are you doing?"
-    mark.say(speech)
-else:
-    print("Hey! Nice to meet you! How is life?")
-    speech = "Hey! Nice to meet you! Howz life?"
-    mark.say(speech)
-mark.runAndWait()
-feel=input("""Choose your feeling: Great/Good/Fine/Cheerful/Excited/Sad/Sick/Tired:
-    ==  """)
-if feel=="good" or feel=="Good":
-    print("Great! Well, I am happy for you!")
-    speech="Great!... Welll,... I am happy for you!"
-    mark.say(speech)
-elif feel=="fine" or feel=="Fine":
-    print("Cool! Enjoy life buddy!")
-    speech="Coool!... Enjoy life buddy!"
-    mark.say(speech)
-elif feel=="cheerful" or feel=="Cheerful":
-    print("Woah! Me too!")
-    speech="Woah! Me too!"
-    mark.say(speech)
-elif feel=="excited" or feel=="Excited":
-    print(emoji.emojize("That's great! This is life :smiling_face_with_sunglasses:"))
-    speech="That's great! This is the Life!..."
-    mark.say(speech)
-elif feel=="great" or feel=="Great":
-    print("That's a really great feeling!")
-    speech="That's a really great feeling!..."
-    mark.say(speech)
-elif feel=="sad" or feel=="Sad":
-    print("Oh, I'm sorry! I hope you will feel better soon...")
-    speech="Ooh, I'm sorry! I hope you will feel better soon..."
-    mark.say(speech)
-elif feel=="sick" or feel=="Sick":
-    print(emoji.emojize("Get Well Soon! :crossed_fingers:"))
-    speech="Oh! Get Well Soon!"
-    mark.say(speech)
-elif feel=="tired" or feel=="Tired":
-    print(emoji.emojize("Oh... Take rest, all the best! :thumbs_up:"))
-    speech="Ooh!... Take rest, all the best!"
-    mark.say(speech)
-else:
-    print("""Sorry! I didn't get that :[
-But I hope you are doing well!""")
-    speech="Sorry! I didn't get that...But I hope you are doing well!"
-    mark.say(speech)
-mark.runAndWait()
+def text_to_speech(text):
+    engine = pyttsx3.init()
+    rate = 150
+    engine.setProperty("rate", rate)
+    engine.say(text)
+    engine.runAndWait()
 
-print(emoji.emojize("You may ask me anything you want to know about... :thinking_face:"))
-speech = "You may ask me anything you want to know about..."
-mark.say(speech)
-mark.runAndWait()
+def greet_user():
+    greet = input()
+    if greet.lower() in ["hi", "hey", "hello"]:
+        response = "Good day! Glad to meet you! How are you doing?"
+    else:
+        response = "Hey! Nice to meet you! How's life?"
+    print(response)
+    text_to_speech(response)
 
-search=input('Search: ')
-print(emoji.emojize("Here's what I found..."))
-speech = "Here's what I found..."
-mark.say(speech)
-mark.runAndWait()
-webbrowser.open('https://www.google.com/search?q='+search)
+def user_feeling():
+    feelings = {
+        "good": "Great! Well, I am happy for you!",
+        "fine": "Cool! Enjoy life, buddy!",
+        "cheerful": "Woah! Me too!",
+        "excited": "That's great! This is life 😎",
+        "great": "That's a really great feeling!",
+        "sad": "Oh, I'm sorry! I hope you will feel better soon...",
+        "sick": "Get well soon! 🤞",
+        "tired": "Oh... Take rest, all the best! 👍",
+    }
+    feel = input("Choose your feeling: Great/Good/Fine/Cheerful/Excited/Sad/Sick/Tired:\n==  ").lower()
+    response = feelings.get(feel, "Sorry! I didn't get that. But I hope you are doing well!")
+    print(response)
+    text_to_speech(response)
 
+def search_query(search):
+    print(emoji.emojize("Here's what I found..."))
+    text_to_speech("Here's what I found...")
+    webbrowser.open('https://www.google.com/search?q=' + search)
+
+def tell_joke():
+    joke = pyjokes.get_joke()
+    print(joke)
+    text_to_speech(joke)
+
+def play_youtube_video(query):
+    print("Playing video...")
+    text_to_speech("Playing video...")
+    pywhatkit.playonyt(query)
+
+def get_weather_info():
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={LOCATION}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    data = response.json()
+    weather = data["weather"][0]["description"]
+    temp = data["main"]["temp"]
+    print(f"Weather in {LOCATION}: {weather}, {temp}°C")
+    text_to_speech(f"Weather in {LOCATION}: {weather}, {temp} degrees Celsius")
+def get_wikipedia_summary(query):
+    summary = wikipedia.summary(query, sentences=2)
+    print(summary)
+    text_to_speech(summary)
+
+def process_input(user_input):
+    user_input = user_input.lower()
+    if "joke" in user_input:
+        tell_joke()
+    elif "play" in user_input and "youtube" in user_input:
+        play_youtube_video(user_input.replace("play", "").replace("youtube", "").strip())
+    elif "weather" in user_input:
+        get_weather_info()
+    elif "wikipedia" in user_input:
+        get_wikipedia_summary(user_input.replace("wikipedia", "").strip())
+    else:
+        search_query(user_input)
+
+def main():
+    greet_user()
+    user_feeling()
+
+    while True:
+        print("\nAsk me anything or type 'exit' or 'bye' to end.")
+        user_input = input()
+        if user_input.lower() in ["exit", "bye"]:
+            print("Goodbye! Have a nice day!")
+            text_to_speech("Goodbye! Have a nice day!")
+            break
+        process_input(user_input)
+
+if __name__ == "__main__":
+    main()
